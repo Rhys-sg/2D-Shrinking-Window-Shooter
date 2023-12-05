@@ -1,1 +1,0 @@
-health_bar_width_offset
