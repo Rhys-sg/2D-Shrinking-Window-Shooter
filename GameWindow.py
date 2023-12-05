@@ -8,7 +8,8 @@ class GameWindow(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("Game Window")
+        self.title("Claustrophobia")
+
         self.width = 500
         self.height = 500
 
@@ -16,7 +17,7 @@ class GameWindow(tk.Tk):
         self.score = 0
 
         # Create and place the score label
-        self.score_label = tk.Label(self, text="Score: 0", font=("Helvetica", 12))
+        self.score_label = tk.Label(self, text="", font=("Helvetica", 12)) # Initialize the label with an empty string to not display on startup
         self.score_label.pack(side=tk.TOP, anchor=tk.NW)
 
         # Center the window on the screen
@@ -28,7 +29,6 @@ class GameWindow(tk.Tk):
 
         self.start_button = tk.Button(self, text="Start", command=self.start_game)
         self.start_button.pack(pady=self.height / 2.5)
-        
 
         self.canvas = tk.Canvas(self, width=self.width, height=self.height)
         self.canvas.pack()
@@ -45,6 +45,7 @@ class GameWindow(tk.Tk):
         self.game_tick_rate = 10  # Time interval for updating all other parts of the game in milliseconds
         self.decrement = 1  # Amount to shrink in each interval
         self.move_distance = 3  # Distance to move the sprite in each key press
+        self.growth_increment = 10  # Amount to grow in each interval
 
         self.end_game_flag = False
 
@@ -60,6 +61,8 @@ class GameWindow(tk.Tk):
 
         # Store the last key pressed
         self.last_key = ""
+          
+
 
     def start_game(self):
         self.start_button.pack_forget()
@@ -67,7 +70,6 @@ class GameWindow(tk.Tk):
         # Show the sprite when the game starts
         self.sprite.show()
 
-        
         self.update()
         self.shrink()
         self.spawn_enemies()
@@ -81,7 +83,6 @@ class GameWindow(tk.Tk):
 
         self.update_score_label() 
 
-
         for bullet in self.sprite.bullets:
             bullet.move()
             self.check_collision_bullet_enemy(bullet)
@@ -89,7 +90,7 @@ class GameWindow(tk.Tk):
         for enemy in self.enemies:
             enemy.move_towards_player()
 
-        if self.check_collision_player_enemy():
+        if self.check_collision_player_enemy() or self.check_collision_player_wall():
             self.end_game()
 
         self.after(self.game_tick_rate, self.update)
@@ -98,7 +99,7 @@ class GameWindow(tk.Tk):
         bullet_coords = self.canvas.coords(bullet.bullet)
 
         for enemy in self.enemies:
-            enemy_coords = self.canvas.coords(enemy.enemy)
+            enemy_coords = self.canvas.coords(enemy.bounding_box)
 
             # Check for overlap between bullet and enemy
             if (
@@ -109,7 +110,7 @@ class GameWindow(tk.Tk):
             ):
                 if enemy.health > 1:
                     enemy.health -= 1
-                    enemy.update_color()
+                    enemy.update_health()
                 else:
                     enemy.canvas.after(1, enemy.delete_enemy)  # Delay the deletion to avoid interference with grow
 
@@ -130,7 +131,7 @@ class GameWindow(tk.Tk):
         player_coords = self.canvas.coords(self.sprite.sprite)
 
         for enemy in self.enemies:
-            enemy_coords = self.canvas.coords(enemy.enemy)
+            enemy_coords = self.canvas.coords(enemy.bounding_box)
 
             # Check for overlap between player and enemy
             if (
@@ -142,6 +143,15 @@ class GameWindow(tk.Tk):
                 return True
 
         return False
+    
+    def check_collision_player_wall(self):
+        # Boundary check for player's sprite
+        current_x, current_y, _, _ = self.canvas.coords(self.sprite.sprite)
+
+        return (current_x + self.sprite.sprite_dx < 0 or
+                current_y + self.sprite.sprite_dy < 0 or
+                current_x + self.sprite.sprite_dx + self.sprite.sprite_size > self.width or
+                current_y + self.sprite.sprite_dy + self.sprite.sprite_size > self.height)
 
     def end_game(self):
         self.end_game_flag = True
@@ -154,27 +164,27 @@ class GameWindow(tk.Tk):
         score_label.place(relx=0.5, rely=0.575, anchor=tk.CENTER)
 
         for enemy in self.enemies:
-            self.canvas.delete(enemy.enemy)
+            enemy.delete_enemy()
         for bullet in self.sprite.bullets:
             self.canvas.delete(bullet.bullet)
+
+        self.score_label.config(text="")
 
         # Hide the sprite and stop updating the game
         self.sprite.hide()
         self.after_cancel(self.update)
 
     def grow(self, direction):
-        increment = 10
-
         if direction == "up":
-            self.height += increment
-            self.geometry(f"{self.width}x{self.height}+{self.winfo_x()}+{self.winfo_y() - increment}")
+            self.height += self.growth_increment
+            self.geometry(f"{self.width}x{self.height}+{self.winfo_x()}+{self.winfo_y() - self.growth_increment}")
         elif direction == "down":
-            self.height += increment
+            self.height += self.growth_increment
         elif direction == "right":
-            self.width += increment
+            self.width += self.growth_increment
         elif direction == "left":
-            self.width += increment
-            self.geometry(f"{self.width}x{self.height}+{self.winfo_x() - increment}+{self.winfo_y()}")
+            self.width += self.growth_increment
+            self.geometry(f"{self.width}x{self.height}+{self.winfo_x() - self.growth_increment}+{self.winfo_y()}")
 
         self.geometry(f"{self.width}x{self.height}")
 
@@ -210,17 +220,17 @@ class GameWindow(tk.Tk):
             self.sprite.fire_bullet()
 
     def spawn_enemies(self):
-        self.enemy_spawn_interval -= 50  # Reduce the spawn interval by 1% each time
+        self.enemy_spawn_interval *= 0.99  # Reduce the spawn interval by 1% each time
 
         # Spawn enemies at random positions off-screen
         x = random.choice([-50, self.width + 50])
         y = random.uniform(0, self.height)
-        maxhealth = (self.score // 10) + 1
+        maxhealth = (self.score // 15) + 1
         enemy = Enemy.Enemy(self.canvas, self, x, y, self.enemy_speed, random.randint(1, maxhealth))
         self.enemies.append(enemy)
 
         # Schedule the next enemy spawn
-        self.after(self.enemy_spawn_interval, self.spawn_enemies)
+        self.after(round(self.enemy_spawn_interval), self.spawn_enemies)
 
     def update_score_label(self):
         # Update the score label
