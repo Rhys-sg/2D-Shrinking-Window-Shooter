@@ -1,6 +1,6 @@
 import tkinter as tk
 
-def create_start_screen(self, width, height):
+def create_start_screen_objects(self, width, height):
     # Draw the rectangle for the button
     button_width = 100
     button_height = 40

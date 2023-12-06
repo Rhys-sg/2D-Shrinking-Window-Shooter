@@ -14,20 +14,12 @@ class GameWindow(tk.Tk):
         self.width = 500
         self.height = 500
 
-        # Initialize score variable
-        self.score = 0
-
-        # Create and place the score label
-        self.score_label = tk.Label(self, text="", font=("Helvetica", 12)) # Initialize the label with an empty string to not display on startup
-        self.score_label.pack(side=tk.TOP, anchor=tk.NW)
-
         # Center the window on the screen
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - self.width) // 2
         y = (screen_height - self.height) // 2
         self.geometry(f"{self.width}x{self.height}+{x}+{y}")
-
 
         self.canvas = tk.Canvas(self, width=self.width, height=self.height)
         self.canvas.pack()
@@ -63,7 +55,17 @@ class GameWindow(tk.Tk):
         # Store the last key pressed
         self.last_key = ""
 
+        # Initialize score variable
+        self.score = 0
+
+        # Create and place the score label
+        self.score_label = tk.Label(self, text="", font=("Helvetica", 12)) # Initialize the label with an empty string to not display on startup
+        self.score_label.pack(side=tk.TOP, anchor=tk.NW)
+
     def start_game(self):
+        self.score_label.config(text=f"Score: {self.score}")
+        self.end_game_flag = False
+        
         self.canvas.itemconfig("start_image", state=tk.HIDDEN)
         self.canvas.itemconfig("title_text", text="")
         self.canvas.itemconfig("start_button", state=tk.HIDDEN)
@@ -82,20 +84,24 @@ class GameWindow(tk.Tk):
         self.end_game_flag = True
 
         # Display game over message
-        game_over_label = tk.Label(self, text="Game Over", font=("Helvetica", 24))
-        game_over_label.place(relx=0.5, rely=0.4, anchor=tk.CENTER)
+        self.canvas.itemconfig("title_text", text="Game Over", font=("Helvetica", 24))
 
         self.canvas.itemconfig("start_text", text="Restart")
+        self.canvas.itemconfig("start_text", state=tk.NORMAL)
         self.canvas.itemconfig("start_button", state=tk.NORMAL)
-        
         self.canvas.itemconfig("help_text", text=f"Score: {self.score}")
+        self.canvas.itemconfig("help_text", state=tk.NORMAL)
 
+        # Delete all enemies and bullets
         for enemy in self.enemies:
             enemy.delete_enemy()
+        self.enemies = []
         for bullet in self.sprite.bullets:
             self.canvas.delete(bullet.bullet)
+        self.sprite.bullets = []
 
         self.score_label.config(text="")
+        self.score = 0
 
         # Hide the sprite and stop updating the game
         self.sprite.hide()
@@ -226,6 +232,8 @@ class GameWindow(tk.Tk):
             self.sprite.fire_bullet()
 
     def spawn_enemies(self):
+        if self.end_game_flag:
+            return
         self.enemy_spawn_interval *= 0.99  # Reduce the spawn interval by 1% each time
 
         # Spawn enemies at random positions off-screen
