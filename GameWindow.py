@@ -1,5 +1,6 @@
 import random
 import tkinter as tk
+import tkinter.messagebox
 
 import Sprite
 import Enemy
@@ -21,26 +22,15 @@ class GameWindow(tk.Tk):
         y = (screen_height - self.height) // 2
         self.geometry(f"{self.width}x{self.height}+{x}+{y}")
 
+        # Create and place the score label
+        self.score_label = tk.Label(self, text="", font=("Helvetica", 12)) # Initialize the label with an empty string to not display on startup
+        self.score_label.pack(side=tk.TOP, anchor=tk.NW)
+
         self.canvas = tk.Canvas(self, width=self.width, height=self.height)
         self.canvas.pack()
 
         StartScreen.create_start_screen_objects(self, self.width, self.height)
 
-        self.sprite_size = 20
-        self.sprite = Sprite.Sprite(self.canvas, self.width, self.height, self.sprite_size)
-        self.sprite.game_window = self  # Pass the reference to GameWindow to the Sprite
-
-        self.enemies = []  # List to store enemy instances
-        self.enemy_spawn_interval = 2000  # Time interval for spawning enemies in milliseconds
-        self.enemy_speed = 1.5  # Speed of enemies
-
-        self.shrink_interval = 100  # Time interval for shrinking in milliseconds
-        self.game_tick_rate = 10  # Time interval for updating all other parts of the game in milliseconds
-        self.decrement = 1  # Amount to shrink in each interval
-        self.move_distance = 3  # Distance to move the sprite in each key press
-        self.growth_increment = 10  # Amount to grow in each interval
-
-        self.end_game_flag = False
 
         self.bind("w", lambda event: self.move_sprite(0, -self.move_distance))
         self.bind("s", lambda event: self.move_sprite(0, self.move_distance))
@@ -55,16 +45,25 @@ class GameWindow(tk.Tk):
         # Store the last key pressed
         self.last_key = ""
 
-        # Initialize score variable
-        self.score = 0
-
-        # Create and place the score label
-        self.score_label = tk.Label(self, text="", font=("Helvetica", 12)) # Initialize the label with an empty string to not display on startup
-        self.score_label.pack(side=tk.TOP, anchor=tk.NW)
+        self.high_score = 0
 
     def start_game(self):
-        self.score_label.config(text=f"Score: {self.score}")
+        self.sprite_size = 20
+
+        self.enemies = []  # List to store enemy instances
+        self.enemy_spawn_interval = 2000  # Time interval for spawning enemies in milliseconds
+        self.enemy_speed = 1.5  # Speed of enemies
+
+        self.shrink_interval = 100  # Time interval for shrinking in milliseconds
+        self.game_tick_rate = 10  # Time interval for updating all other parts of the game in milliseconds
+        self.decrement = 1  # Amount to shrink in each interval
+        self.move_distance = 3  # Distance to move the sprite in each key press
+        self.growth_increment = 10  # Amount to grow in each interval
+
         self.end_game_flag = False
+        
+        self.score = 0
+        self.score_label.config(text=f"Score: {self.score}")
         
         self.canvas.itemconfig("start_image", state=tk.HIDDEN)
         self.canvas.itemconfig("title_text", text="")
@@ -72,6 +71,9 @@ class GameWindow(tk.Tk):
         self.canvas.itemconfig("start_text", text="")
         self.canvas.itemconfig("help_button", state=tk.HIDDEN)
         self.canvas.itemconfig("help_text", text="")
+
+        self.sprite = Sprite.Sprite(self.canvas, self.width, self.height, self.sprite_size)
+        self.sprite.game_window = self  # Pass the reference to GameWindow to the Sprite
 
         # Show the sprite when the game starts
         self.sprite.show()
@@ -81,15 +83,23 @@ class GameWindow(tk.Tk):
         self.spawn_enemies()
 
     def end_game(self):
+        # Center the window on the screen
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - self.width) // 2
+        y = (screen_height - self.height) // 2
+        self.geometry(f"{self.width}x{self.height}+{x}+{y}")
+
         self.end_game_flag = True
 
         # Display game over message
-        self.canvas.itemconfig("title_text", text="Game Over", font=("Helvetica", 24))
-
+        self.canvas.itemconfig("title_text", text="Game Over", font=("Helvetica", 28))
+        
+        self.high_score = max(self.high_score, self.score)
+        self.canvas.itemconfig("help_text", text="Score: " + str(self.score) + "\n" + "  Best: " + str(self.high_score))
         self.canvas.itemconfig("start_text", text="Restart")
         self.canvas.itemconfig("start_text", state=tk.NORMAL)
         self.canvas.itemconfig("start_button", state=tk.NORMAL)
-        self.canvas.itemconfig("help_text", text=f"Score: {self.score}")
         self.canvas.itemconfig("help_text", state=tk.NORMAL)
 
         # Delete all enemies and bullets
