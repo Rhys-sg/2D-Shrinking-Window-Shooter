@@ -9,8 +9,6 @@ class Enemy:
         self.x = x
         self.y = y
         self.speed = speed
-
-        self.tick_count = 0
         self.enemy_size = 30   
         
         self.health = health
@@ -19,12 +17,20 @@ class Enemy:
         self.health_bar_width = self.enemy_size + self.health_bar_x_offset
         self.health_bar_height = 5
         self.health_bar_y_offset = -20
+        
+        self.tick_count = 0
 
         # Load the GIF images using Pillow
         self.r_frames = self.load_gif_frames("C:/Users/rsore/Documents/GitHub/2D-Shrinking-Window-Shooter/Assets/r_crop.gif")
         self.l_frames = self.load_gif_frames("C:/Users/rsore/Documents/GitHub/2D-Shrinking-Window-Shooter/Assets/l_crop.gif")
 
         self.enemy_image = self.r_frames[0]
+
+        # Animation variables
+        self.animation_index = 0
+
+        # Create the enemy as an image on the canvas
+        self.visual = self.canvas.create_image(self.x + self.enemy_size/2, self.y + self.enemy_size/2, anchor="center", image=self.enemy_image)
 
         # Create a bounding/hurt box on the canvas
         self.bounding_box = self.canvas.create_rectangle(self.x, self.y, self.x + self.enemy_size, self.y + self.enemy_size, fill="red")
@@ -38,12 +44,6 @@ class Enemy:
         self.health_bar_r = self.canvas.create_rectangle(*health_bar_coordinates, fill="red")
         self.health_bar_g = self.canvas.create_rectangle(*health_bar_coordinates, fill="green")
 
-        # Create the enemy as an image on the canvas
-        self.visual = self.canvas.create_image(self.x + self.enemy_size/2, self.y + self.enemy_size/2, anchor="center", image=self.enemy_image)
-
-        # Animation variables
-        self.animation_index = 0
-        self.animation_direction = 1  # 1 for right, -1 for left
 
     def load_gif_frames(self, path):
         gif = Image.open(path)
@@ -80,13 +80,10 @@ class Enemy:
         if self.tick_count % 5 != 0:
             return
 
-        # Update animation frame
-        self.animation_index += self.animation_direction
-
-        # Check animation direction
-        if self.animation_index >= len(frames) or self.animation_index < 0:
-            self.animation_direction *= -1
-            self.animation_index += 2 * self.animation_direction
+        if self.animation_index >= len(frames)-1:
+            self.animation_index = 0
+        else:
+            self.animation_index += 1
 
         # Update the image
         self.enemy_image = frames[self.animation_index]

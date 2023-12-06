@@ -1,7 +1,7 @@
 import tkinter as tk
 
+
 def create_start_screen_objects(self, width, height):
-    # Draw the rectangle for the button
     button_width = 100
     button_height = 40
     x_padding = 10
@@ -14,14 +14,11 @@ def create_start_screen_objects(self, width, height):
     original_image  = tk.PhotoImage(file="C:/Users/rsore/Documents/GitHub/2D-Shrinking-Window-Shooter/Assets/Icon_nobg.png")
     image_width, image_height = original_image.width(), original_image.height()
 
-    # Define the desired size
-    new_width = 100  # Replace with your desired width
-    new_height = 100  # Replace with your desired height
+    new_width = 100
+    new_height = 100
 
     # Calculate the subsample factor to resize the image
     subsample_factor = max(1, image_width // new_width, image_height // new_height)
-
-    # Resize the image
     resized_image = original_image.subsample(subsample_factor)
 
     # Store the resized image as an instance variable
@@ -56,9 +53,9 @@ def create_start_screen_objects(self, width, height):
     self.canvas.create_rectangle(help_button_x, help_button_y, help_button_x + button_width, help_button_y + button_height, outline="black", tags="help_button")
     help_text_x = help_button_x + button_width // 2
     help_text_y = help_button_y + button_height // 2
-    self.canvas.create_text(help_text_x, help_text_y, text="Help", font=("Helvetica", 12, "bold"), tags="help_text")
-    self.canvas.tag_bind("help_button", "<Button-1>", lambda event: self.start_game())
-    self.canvas.tag_bind("help_text", "<Button-1>", lambda event: self.start_game())
+    self.canvas.create_text(help_text_x, help_text_y, text="Info", font=("Helvetica", 12, "bold"), tags="help_text")
+    self.canvas.tag_bind("help_button", "<Button-1>", lambda event: self.create_help_popup())
+    self.canvas.tag_bind("help_text", "<Button-1>", lambda event: self.create_help_popup())
     self.canvas.tag_bind("help_button", "<Enter>", lambda event: self.canvas.itemconfig("help_button", fill="lightgrey"))
     self.canvas.tag_bind("help_button", "<Leave>", lambda event: self.canvas.itemconfig("help_button", fill=""))
     self.canvas.tag_bind("help_text", "<Enter>", lambda event: self.canvas.itemconfig("help_button", fill="lightgrey"))

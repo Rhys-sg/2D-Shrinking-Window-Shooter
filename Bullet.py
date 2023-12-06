@@ -3,7 +3,7 @@ class Bullet:
         self.canvas = canvas
         self.game_window = game_window
         self.bullet_size = 5
-        self.bullet = self.canvas.create_rectangle(x, y, x + self.bullet_size, y + self.bullet_size, fill="black")
+        self.bullet = self.canvas.create_oval(x, y, x + self.bullet_size, y + self.bullet_size, fill="black")
         self.dx = dx
         self.dy = dy
         self.delete_flag = False

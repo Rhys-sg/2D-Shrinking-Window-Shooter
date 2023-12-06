@@ -1,6 +1,5 @@
 import random
 import tkinter as tk
-import tkinter.messagebox
 
 import Sprite
 import Enemy
@@ -31,7 +30,72 @@ class GameWindow(tk.Tk):
 
         StartScreen.create_start_screen_objects(self, self.width, self.height)
 
+        # Store the last key pressed
+        self.last_key = ""
 
+        self.high_score = 0
+
+    def create_help_popup(self):
+        # Dimensions and position of the popup
+        popup_width = 300
+        popup_height = 275
+        popup_x = (self.width - popup_width) // 2
+        popup_y = (self.height - popup_height) // 2 - 50
+
+        # Create a rectangle as the background of the popup
+        popup_rectangle = self.canvas.create_rectangle(
+            popup_x, popup_y, popup_x + popup_width, popup_y + popup_height,
+            fill="white", outline="black", tags="popup"
+        )
+
+        # Help text
+        help_text = (
+            "Welcome to Claustrophobia!\n\n"
+            "Objective: Survive as long as possible by\nnot touching the walls and avoiding enemies.\n\n"
+            "Controls:\n"
+            "   - Use 'W', 'A', 'S', 'D' or arrow keys to move.\n"
+            "   - Click the left mouse button to shoot.\n\n"
+            "The walls will begin to close in on you, so\nshoot them to make them grow."
+        )
+
+        # Create a text item inside the popup rectangle
+        text_x = popup_x + 20
+        text_y = popup_y + 20
+        help_text_item = self.canvas.create_text(
+            text_x, text_y, text=help_text, font=("Helvetica", 10), anchor=tk.NW, tags="popup"
+        )
+
+        # Create a button to close the popup
+        button_width = 80
+        button_height = 30
+        button_x = (self.width - button_width) // 2
+        button_y = popup_y + popup_height - 40
+        close_button = self.canvas.create_rectangle(
+            button_x, button_y, button_x + button_width, button_y + button_height,
+            fill="", outline="black", tags="popup"
+        )
+        close_text_x = button_x + button_width // 2
+        close_text_y = button_y + button_height // 2
+        close_text = self.canvas.create_text(
+            close_text_x, close_text_y, text="Close", font=("Helvetica", 10, "bold"), tags="popup"
+        )
+
+        # Bind events to close the popup when the close button is clicked
+        self.canvas.tag_bind(close_button, "<Button-1>", lambda event: self.close_help_popup())
+        self.canvas.tag_bind(close_text, "<Button-1>", lambda event: self.close_help_popup())
+        
+        self.canvas.tag_bind(close_button, "<Enter>", lambda event: self.canvas.itemconfig(close_button, fill="lightgrey"))
+        self.canvas.tag_bind(close_button, "<Leave>", lambda event: self.canvas.itemconfig(close_button, fill=""))
+        self.canvas.tag_bind(close_text, "<Enter>", lambda event: self.canvas.itemconfig(close_button, fill="lightgrey"))
+        self.canvas.tag_bind(close_text, "<Leave>", lambda event: self.canvas.itemconfig(close_button, fill=""))
+
+    def close_help_popup(self):
+        # Delete all items with the "popup" tag (rectangle, text, and button)
+        self.canvas.delete("popup")
+
+
+    def start_game(self):
+        # controls need to be here so that they are not active on the start screen
         self.bind("w", lambda event: self.move_sprite(0, -self.move_distance))
         self.bind("s", lambda event: self.move_sprite(0, self.move_distance))
         self.bind("d", lambda event: self.move_sprite(self.move_distance, 0))
@@ -42,12 +106,6 @@ class GameWindow(tk.Tk):
         self.bind("<Left>", lambda event: self.move_sprite(-self.move_distance, 0))
         self.bind("<Button-1>", lambda event: self.fire_bullet())
 
-        # Store the last key pressed
-        self.last_key = ""
-
-        self.high_score = 0
-
-    def start_game(self):
         self.sprite_size = 20
 
         self.enemies = []  # List to store enemy instances

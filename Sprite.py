@@ -1,5 +1,6 @@
-import tkinter as tk
 import math
+import tkinter as tk
+from PIL import Image, ImageTk, ImageSequence
 
 import Bullet
 
@@ -10,10 +11,6 @@ class Sprite:
         self.height = height
         self.sprite_size = sprite_size
 
-        self.sprite = self.canvas.create_rectangle(0, 0, sprite_size, sprite_size, fill="blue")
-        self.canvas.move(self.sprite, (width - sprite_size) / 2, (height - sprite_size) / 2)
-        self.canvas.itemconfig(self.sprite, state=tk.HIDDEN)
-
         # Initialize sprite velocity and damping factor
         self.sprite_dx = 0
         self.sprite_dy = 0
@@ -23,11 +20,50 @@ class Sprite:
         self.bullet_speed = 10
         self.bullets = []
 
+        self.sprite = self.canvas.create_rectangle(0, 0, sprite_size, sprite_size, fill="blue")
+        self.canvas.move(self.sprite, (width - sprite_size) / 2, (height - sprite_size) / 2)
+        self.canvas.itemconfig(self.sprite, state=tk.HIDDEN)
+
+        self.tick_count = 0
+
+        # Load the GIF images using Pillow
+        self.r_frames = self.load_gif_frames("C:/Users/rsore/Documents/GitHub/2D-Shrinking-Window-Shooter/Assets/r_crop.gif")
+        self.l_frames = self.load_gif_frames("C:/Users/rsore/Documents/GitHub/2D-Shrinking-Window-Shooter/Assets/l_crop.gif")
+
+        self.image = self.r_frames[0]
+
+        # Animation variables
+        self.s_animation_index = 0
+
+        # Create an image on the canvas
+        self.visual = self.canvas.create_image((width - sprite_size) / 2, (height - sprite_size) / 2, anchor="center", image=self.image)
+
+    def load_gif_frames(self, path):
+        gif = Image.open(path)
+        frames = [ImageTk.PhotoImage(frame) for frame in ImageSequence.Iterator(gif)]
+        return frames
+
+    def animate(self, frames):
+
+        # only update the animation every 5 ticks
+        self.tick_count += 1
+        if self.tick_count % 5 != 0:
+            return
+
+        if self.s_animation_index >= len(frames)-1:
+            self.s_animation_index = 0
+        else:
+            self.s_animation_index += 1
+
+        # Update the image
+        self.image = frames[self.s_animation_index]
+        self.canvas.itemconfig(self.visual, image=self.image)
+
     def show(self):
-        self.canvas.itemconfig(self.sprite, state=tk.NORMAL)
+        self.canvas.itemconfig(self.visual, state=tk.NORMAL)
 
     def hide(self):
-        self.canvas.itemconfig(self.sprite, state=tk.HIDDEN)
+        self.canvas.itemconfig(self.visual, state=tk.HIDDEN)
 
     def move(self):
         current_x, current_y, _, _ = self.canvas.coords(self.sprite)
@@ -46,10 +82,18 @@ class Sprite:
             new_y = self.height - self.sprite_size
 
         self.canvas.coords(self.sprite, new_x, new_y, new_x + self.sprite_size, new_y + self.sprite_size)
+        self.canvas.coords(self.visual, new_x + self.sprite_size / 2, new_y + self.sprite_size / 2)
 
         # Apply damping to simulate friction
         self.sprite_dx *= self.damping
         self.sprite_dy *= self.damping
+
+        # Flip the image horizontally if the sprite is to the right of the mouse/ the scaling if the enemy is to the left of the player
+        mouse_x = self.canvas.winfo_pointerx() - self.canvas.winfo_rootx()
+        if new_x > mouse_x:
+            self.animate(self.l_frames)
+        else:
+            self.animate(self.r_frames)
 
     def fire_bullet(self):
         current_x, current_y, _, _ = self.canvas.coords(self.sprite)
