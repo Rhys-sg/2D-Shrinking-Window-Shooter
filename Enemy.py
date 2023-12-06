@@ -1,6 +1,7 @@
 import math
 import tkinter as tk
 from PIL import Image, ImageTk, ImageSequence
+import os
 
 class Enemy:
     def __init__(self, canvas, game_window, x, y, speed, health):
@@ -21,8 +22,9 @@ class Enemy:
         self.tick_count = 0
 
         # Load the GIF images using Pillow
-        self.r_frames = self.load_gif_frames("C:/Users/rsore/Documents/GitHub/2D-Shrinking-Window-Shooter/Assets/r_crop.gif")
-        self.l_frames = self.load_gif_frames("C:/Users/rsore/Documents/GitHub/2D-Shrinking-Window-Shooter/Assets/l_crop.gif")
+        path = os.path.dirname(__file__)
+        self.r_frames = self.load_gif_frames(path+"/Assets/r_crop.gif")
+        self.l_frames = self.load_gif_frames(path+"/Assets/l_crop.gif")
 
         self.enemy_image = self.r_frames[0]
 

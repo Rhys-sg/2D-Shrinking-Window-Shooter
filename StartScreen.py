@@ -1,4 +1,5 @@
 import tkinter as tk
+import os
 
 
 def create_start_screen_objects(self, width, height):
@@ -11,7 +12,8 @@ def create_start_screen_objects(self, width, height):
     title_font = 12
 
     # Load the image and store it as an instance variable
-    original_image  = tk.PhotoImage(file="C:/Users/rsore/Documents/GitHub/2D-Shrinking-Window-Shooter/Assets/Icon_nobg.png")
+    path = os.path.dirname(__file__)
+    original_image  = tk.PhotoImage(file=path+"/Assets/Icon_nobg.png")
     image_width, image_height = original_image.width(), original_image.height()
 
     new_width = 100
